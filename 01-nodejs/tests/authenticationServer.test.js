@@ -32,7 +32,7 @@ describe('API Tests', () => {
         'Content-Length': requestBody.length,
       },
     };
-
+    // console.log("Sending requestbody: ", requestBody)
     const response = await sendRequest(options, requestBody);
 
     expect(response.statusCode).toBe(201);

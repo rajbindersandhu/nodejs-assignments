@@ -41,9 +41,293 @@
  */
   const express = require('express');
   const bodyParser = require('body-parser');
+  const fs = require("node:fs");
+  // let ID = 1;
+  let todoList = [];
   
   const app = express();
   
   app.use(bodyParser.json());
+
+  function isJson(payload){
+    try{
+      const json = JSON.parse(JSON.stringify(payload))
+      return true;
+    }catch(err){
+      console.log(`Error occured in isJson function, ${err}`);
+      return false;
+    }
+  }
+
+  function validateTodoPayload(req, res, next){
+    const payload = req.body;
+    console.log(payload);
+    try{
+      if(isJson(payload)){
+        const jsonPayload = payload;
+        if(Object.keys(jsonPayload).length>3 || !("title" in jsonPayload) || !("description" in jsonPayload) || !("completed" in jsonPayload) || !(typeof jsonPayload["title"] == "string") || !(typeof jsonPayload["description"] == "string")){
+          throw new Error("Payload invalid data")
+        }else{
+          next();
+        }
+        
+      }else{
+        throw new Error("Payload not json");
+      }
+    }catch(err){
+      console.log(err);
+      res.status(400).json({
+          "error": "Invalid payload"
+        });
+        return;
+    }
+    
+  }
+
+  app.post("/todos", (req, res) => {
+    const {title, description, completed} = req.body;
+    let todo = {}
+    // ID++;
+    // fs.readFile("./todos.json", "utf8",  (err, data) => {
+    //   if(err){
+    //     throw err;
+    //   }
+    //   let jsonData = [];
+    //   if(data && data != "[]"){
+    //     jsonData = JSON.parse(data);
+    //   }
+    //   // console.log("Data from file: ", data)
+    //   // console.log("Data type: ", typeof data)
+    //   // console.log("JsonData created: ", jsonData)
+    //   // console.log("JsonData type: ", typeof jsonData)
+    // todo = {
+    //   "title": title,
+    //   "description": description,
+    //   "completed": completed ? completed : "false",
+    //   "id": jsonData.length+1
+    // };
+    //   jsonData.push(todo);
+    //   fs.writeFile("./todos.json", JSON.stringify(jsonData), err => {
+    //     if(err){
+    //       throw err;
+    //     }else{
+    //       console.log("File written successfully");
+    //       res.status(201).json(todo);
+    //     }
+    //   })
+    // })
+
+    todo = {
+      "title": title,
+      "description": description,
+      "completed": completed ? completed : "false",
+      "id": todoList.length+1
+    };
+    todoList.push(todo);
+    res.status(201).json(todo);
+  });
+
+  app.get("/todos", (req, res) => {
+    // fs.readFile("./todos.json", "utf8", (err, data) => {
+    //   if(err){
+    //     throw err;
+    //   }
+    //   const jsonData = JSON.parse(data);
+    //   res.status(200).json(jsonData);
+    // })
+    res.status(200).json(todoList);
+  })
+
+  app.get("/todos/:id", (req, res) =>{
+    const reqId = req.params.id;
+    // console.log("ID : ", id);
+    // console.log(typeof id)
+    // fs.readFile("./todos.json", "utf8", (err, data) => {
+    //   if(err){
+    //     throw err
+    //   }
+    //   const jsonData = JSON.parse(data);
+    //   const requiredTodo = jsonData.filter(ele => ele.id == reqId);
+    //   if(requiredTodo.length == 0){
+    //     res.status(404).json({
+    //       "error": "Todo not found"
+    //     });
+    //     return;
+    //   }else{
+    //     res.status(200).json(requiredTodo);
+    //     return;
+    //   }
+    // });
+
+    const requiredTodo = todoList.filter(ele => ele.id == reqId);
+      if(requiredTodo.length == 0){
+        res.status(404).json({
+          "error": "Todo not found"
+        });
+        return;
+      }else{
+        console.log("RequiredTodo: ", requiredTodo)
+        res.status(200).json(requiredTodo[0]);
+        return;
+      }
+  })
+
+  app.put("/todos/:id", (req, res) => {
+    const {title, description, completed} = req.body;
+    const reqId = req.params.id;
+    // console.log("ID parameter: ", reqId)
+    // console.log(`title: ${title}, description: ${description}, completed: ${completed}`)
+    const payload = req.body;
+    const keysArray = Object.keys(payload)
+    // console.log(payload)
+    // console.log(Object.keys(payload))
+    // if(keysArray.length>3 || !(keysArray.includes("title")) || !(keysArray.includes("description")) || !(keysArray.includes("completed"))){
+    //   res.status(400).json({
+    //     "error": "Invalid payload"
+    //   });
+    //   return;
+    // }
+
+    if(title || description || completed){
+      //   fs.readFile("./todos.json", "utf8", (err, data) => {
+      //   if(err){
+      //     throw err;
+      //   }
+      //   let jsonData = JSON.parse(data);
+      //   let tempData = {}
+      //   for(let i=0;i<jsonData.length;i++){
+      //     // console.log("ID for todo in list: ", jsonData[i]["id"]);
+      //     // console.log(jsonData[i]["id"] == reqId)
+      //     if(jsonData[i]["id"] == reqId){
+      //       if(title){
+      //         jsonData[i]["title"] = title
+      //       }
+      //       if(description){
+      //         jsonData[i]["description"] = description
+      //       }
+      //       if(completed){
+      //         jsonData[i]["completed"] = completed
+      //       }
+      //       tempData = jsonData[i];
+      //       // console.log(Object.keys(tempData));
+      //     }
+      //   }
+
+      //   if(Object.keys(tempData).length==0){
+      //     res.status(404).json({
+      //       "error": "Todo not found."
+      //     });
+      //     return;
+      //   }
+
+      //   fs.writeFile("./todos.json", JSON.stringify(jsonData), (err) => {
+      //     if(err){
+      //       throw err;
+      //     }else{
+      //       console.log("Updating file successfully")
+      //     }
+      //   });
+
+      //   res.status(200).json(tempData);
+
+      // });
+
+      let tempData = {}
+        for(let i=0;i<todoList.length;i++){
+          // console.log("ID for todo in list: ", jsonData[i]["id"]);
+          // console.log(jsonData[i]["id"] == reqId)
+          if(todoList[i]["id"] == reqId){
+            if(title){
+              todoList[i]["title"] = title
+            }
+            if(description){
+              todoList[i]["description"] = description
+            }
+            if(completed){
+              todoList[i]["completed"] = completed
+            }
+            tempData = todoList[i];
+            // console.log(Object.keys(tempData));
+          }
+        }
+
+        if(Object.keys(tempData).length==0){
+          res.status(404).json({
+            "error": "Todo not found."
+          });
+          return;
+        }else{
+          res.status(200).json(tempData);
+          return;
+        }
+        
+    }
+  });
+
+  app.delete("/todos/:id", (req, res) => {
+    const reqId = req.params.id;
+    let foundTodo = false;
+    // fs.readFile("./todos.json", "utf8", (err, data) => {
+    //   if(err){
+    //     throw err;
+    //   }
+
+    //   let jsonData = JSON.parse(data);
+    //   let newTodoList = []
+    //   for(let i=0;i<jsonData.length;i++){
+    //     if(jsonData[i].id == reqId){
+    //       foundTodo = true;
+    //     }else{
+    //       newTodoList.push(jsonData[i]);
+    //     }
+    //   }
+    //   if(foundTodo){
+    //     fs.writeFile("./todos.json", JSON.stringify(newTodoList), (err) => {
+    //       if(err){
+    //         throw err
+    //       }else{
+    //         console.log("Succefully update file after delete");
+    //       }
+    //     });
+    //     res.status(200).json({
+    //       "msg": "successfully deleted the todo"
+    //     });
+    //   }else{
+    //     res.status(404).json({
+    //       "error": "Todo not found"
+    //     });
+    //     return;
+    //   }
+    // });
+
+    let newTodoList = []
+      for(let i=0;i<todoList.length;i++){
+        if(todoList[i].id == reqId){
+          foundTodo = true;
+        }else{
+          newTodoList.push(todoList[i]);
+        }
+      }
+      if(foundTodo){
+        todoList = [...newTodoList]
+        res.status(200).json({
+          "msg": "successfully deleted the todo"
+        });
+      }else{
+        res.status(404).json({
+          "error": "Todo not found"
+        });
+        return;
+      }
+  })
+
+  app.use((err, req, res, next) => {
+    console.log(err);
+    res.status(500).json({"error":"Internal server error"})
+  })
+
+  // app.listen(3000, ()=>{
+  //   console.log("listening on port: 3000");
+  // })
   
   module.exports = app;

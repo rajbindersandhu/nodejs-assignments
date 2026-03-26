@@ -33,74 +33,91 @@
   const PORT = 3000;
   const app = express();
   // write your logic here, DONT WRITE app.listen(3000) when you're running tests, the tests will automatically start the server
-  
-  var users = [];
-  
   app.use(express.json());
+  let users = []
+
+  function validateUser(uname, pass){
+    let foundUser = {}
+    for(let i=0;i<users.length;i++){
+      if(users[i].email == uname && users[i].password == pass){
+        foundUser = users[i];
+        break;
+      }
+    }
+    return foundUser;
+  }
+
   app.post("/signup", (req, res) => {
-    var user = req.body;
-    let userAlreadyExists = false;
-    for (var i = 0; i<users.length; i++) {
-      if (users[i].email === user.email) {
-          userAlreadyExists = true;
-          break;
+    const {email, password, firstName, lastName} = req.body;
+    // console.log(`username: ${username}, password: ${password}, firstname: ${firstname}, lastname: ${lastname}`)
+    if(users.length){
+      let isUserPresent = users.filter(user => user.email == email).length;
+      if(!isUserPresent){
+        res.status(400).send("Username already exits");
+        return;
       }
     }
-    if (userAlreadyExists) {
-      res.sendStatus(400);
-    } else {
-      users.push(user);
-      res.status(201).send("Signup successful");
+    const userCreated = {
+      "email": email,
+      "password": password,
+      "firstName": firstName,
+      "lastName": lastName,
+      "id": users.length + 1
     }
+    users.push(userCreated);
+    // console.log("User list created: ", users);
+    res.status(201).send("Signup successful");
   });
-  
+
   app.post("/login", (req, res) => {
-    var user = req.body;
-    let userFound = null;
-    for (var i = 0; i<users.length; i++) {
-      if (users[i].email === user.email && users[i].password === user.password) {
-          userFound = users[i];
-          break;
-      }
-    }
-  
-    if (userFound) {
-      res.json({
-          firstName: userFound.firstName,
-          lastName: userFound.lastName,
-          email: userFound.email
-      });
-    } else {
-      res.sendStatus(401);
+    const {email, password} = req.body;
+    let foundUser = validateUser(email, password);
+    console.log("Found user: ", foundUser)
+    if(Object.keys(foundUser).length){
+      res.status(200).json({
+        "email": foundUser.email,
+        "firstName": foundUser.firstName,
+        "lastName": foundUser.lastName,
+        "id": foundUser.id
+      })
+    }else{
+      res.status(401).send("Unauthorized")
     }
   });
-  
+
   app.get("/data", (req, res) => {
-    var email = req.headers.email;
-    var password = req.headers.password;
-    let userFound = false;
-    for (var i = 0; i<users.length; i++) {
-      if (users[i].email === email && users[i].password === password) {
-          userFound = true;
-          break;
+    const username = req.get("email");
+    const password = req.get("password");
+    const foundUser = validateUser(username, password);
+
+    if(Object.keys(foundUser).length){
+      let tempList = []
+      for(let i=0;i<users.length;i++){
+        let tempObjt = {
+          "email": users[i].email,
+          "firstName": users[i].firstName,
+          "lastName": users[i].lastName,
+          "id": users[i].id
+        }
+        tempList.push(tempObjt);
       }
-    }
-  
-    if (userFound) {
-      let usersToReturn = [];
-      for (let i = 0; i<users.length; i++) {
-          usersToReturn.push({
-              firstName: users[i].firstName,
-              lastName: users[i].lastName,
-              email: users[i].email
-          });
-      }
-      res.json({
-          users
-      });
-    } else {
-      res.sendStatus(401);
+      res.status(200).json({"users": tempList});
+    }else{
+      res.status(401).send("Unauthorized");
     }
   });
+
+  app.use((req, res, next) => {
+    res.status(404).send("Invalid route");
+  });
+
+  app.use((err, req, res, next) => {
+    console.log(err);
+    res.status(500).send("Internal ERROR");
+  })
+
+  // app.listen(3000, () => {
+  //   console.log("Listening on port: 3000");
+  // })
   
   module.exports = app;
