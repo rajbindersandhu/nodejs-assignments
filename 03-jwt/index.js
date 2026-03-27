@@ -15,6 +15,15 @@ const jwtPassword = 'secret';
  */
 function signJwt(username, password) {
     // Your code here
+    const matchUsernameList = username.match(/[\w-]+\@[a-zA-Z]{3,9}\.[a-z]{2,4}/) ? username.match(/[\w-]+\@[a-zA-Z]{3,9}\.[a-z]{2,4}/) : [];
+    const matchPasswordList = password.match(/^.{6,}$/)? password.match(/^.{6,}$/) : [];
+    if(matchUsernameList.length>0 && matchPasswordList.length>0){
+        const token = jwt.sign({"username": username, "password":password}, jwtPassword);
+        return token;
+    }else{
+        return null;
+    }
+    
 }
 
 /**
@@ -27,6 +36,12 @@ function signJwt(username, password) {
  */
 function verifyJwt(token) {
     // Your code here
+    try{
+        let decodedDate = jwt.verify(token, jwtPassword);
+        return true;
+    }catch(err){
+        return false;
+    }
 }
 
 /**
@@ -38,8 +53,28 @@ function verifyJwt(token) {
  */
 function decodeJwt(token) {
     // Your code here
+    try{
+        const decodePayload = jwt.decode(token);
+        // console.log(decodePayload)
+        if(!decodePayload){
+            throw "error";
+        }
+        return true;
+    }catch(err){
+        return false;
+    }
+    // const payload = token.split(".")[1];
+    // const final = base64decoder(token);
+    // console.log(final);
 }
 
+// function base64decoder(token){
+//     const x = token.replace(/-/g, "+").replace(/_/g, "/");
+//     const buffer = Buffer.from(x, "base64");
+//     return buffer.toString("utf-8");
+// }
+
+// decodeJwt("iambest");
 
 module.exports = {
   signJwt,

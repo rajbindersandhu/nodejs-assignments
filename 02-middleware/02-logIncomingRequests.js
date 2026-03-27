@@ -5,6 +5,9 @@ const app = express();
 
 function logRequests(req, res, next) {
     // write the logic for request log here
+    //${new Date().getFullYear()}-${new Date().getMonth()}-${new Date().getDate()}T${new Date().getHours()}:${new Date().getMinutes()}:${new Date().getSeconds()}.
+    console.log(`${req.method} / - ${new Date().toISOString()}`);
+    next();
 }
 
 app.use(logRequests);
